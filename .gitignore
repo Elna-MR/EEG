@@ -52,3 +52,16 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Large data files
+*.npz
+*.bdf
+*.fdt
+*.set
+
+# Preprocessed data
+eeg_pain_simple/packed/
+eeg_pain_simple/data/ds005284/**/*.bdf
+eeg_pain_simple/data/ds005284/derivatives/**/*.fdt
+eeg_pain_simple/data/ds005284/derivatives/**/*.set
+

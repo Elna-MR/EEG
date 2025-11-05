@@ -1,0 +1,21 @@
+# Test Question for AI Interview Helper
+
+## Coding Challenge
+Write a Python function that takes a list of numbers and returns the sum of all even numbers.
+
+Example:
+- Input: [1, 2, 3, 4, 5, 6]
+- Output: 12 (2 + 4 + 6)
+
+## Requirements
+- Function should be named `sum_even_numbers`
+- Handle empty lists
+- Return 0 if no even numbers found
+
+
+
+
+
+
+
+

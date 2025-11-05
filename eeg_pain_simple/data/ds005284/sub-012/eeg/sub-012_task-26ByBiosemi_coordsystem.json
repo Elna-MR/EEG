@@ -1,0 +1,6 @@
+{
+  "IntendedFor": "sub-012_task-26ByBiosemi_eeg.bdf",
+  "EEGCoordinateSystem": "Other",
+  "EEGCoordinateUnits": "mm",
+  "EEGCoordinateSystemDescription": "Biosemi 64-channel system"
+}

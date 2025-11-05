@@ -1,0 +1,30 @@
+Read me.
+
+Step 1: Install AutoHotkey (if you haven’t)
+Download from: https://www.autohotkey.com/
+
+Step 2: Create a New Script
+Right-click on your desktop or a folder
+
+Select New → AutoHotkey Script
+
+Name it MiddleMouseToHotkey.ahk
+
+Right-click → Edit Script as below and save it.
+
+
+#NoTrayIcon           ; Hides the green tray icon
+DetectHiddenWindows, On
+SetTitleMatchMode, 2
+
+; Hide the script window from taskbar
+WinHide, % "ahk_class AutoHotkey"
+
+; Remap Middle Mouse Button to Ctrl+Shift+X
+MButton::
+Send ^+x
+return
+
+
+Step 3: Run the app:
+Password: TahChin2025*
