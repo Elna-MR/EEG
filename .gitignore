@@ -65,3 +65,9 @@ eeg_pain_simple/data/ds005284/**/*.bdf
 eeg_pain_simple/data/ds005284/derivatives/**/*.fdt
 eeg_pain_simple/data/ds005284/derivatives/**/*.set
 
+
+# Large data files - already added above but being explicit
+ds005284_full/**/*.bdf
+ds005284_full/**/*.fdt
+ds005284_full/**/*.set
+
