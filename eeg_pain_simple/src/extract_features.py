@@ -20,27 +20,20 @@ def riemann_fb_features(X: np.ndarray, sfreq: float,
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--npz", required=True, help="Input NPZ with X,y,subject")
-    ap.add_argument("--sfreq", required=False, help="JSON file with sampling freq (optional, can read from NPZ)")
+    ap.add_argument("--npz", required=True, help="Input preprocessed NPZ")
     ap.add_argument("--out", required=True, help="Output features NPZ")
     args = ap.parse_args()
 
     data = np.load(args.npz, allow_pickle=True)
-    X, y = data['X'], data['y']
-    subject = data['subject']  # Now using 'subject' instead of 'groups'
-    
-    # Get sfreq from NPZ if available, otherwise from JSON
-    if 'sfreq' in data:
-        sfreq = float(data['sfreq'])
-    elif args.sfreq:
-        sfreq = json.loads(Path(args.sfreq).read_text())["sfreq"]
-    else:
-        raise ValueError("sfreq not found in NPZ and --sfreq not provided")
+    X = data["X"]
+    y = data["y"]
+    subject = data["subject"]
+    sfreq = float(data["sfreq"])
 
     Z = riemann_fb_features(X, sfreq)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(args.out, X=Z, y=y, subject=subject)
-    print(f"Features: {Z.shape} saved to {args.out}")
+    print(f"[INFO] Features {Z.shape} saved to {args.out}")
 
 
 if __name__ == "__main__":

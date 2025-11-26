@@ -1,27 +1,73 @@
-EEG Pain (Simple) — Riemannian + DANN
+# EEG Pain Analysis Pipeline
 
-Stages
-- Preprocessing (MNE): Load BDF, band-pass 1–45 Hz, epochs for pain(54) and baseline from pre-stim
-- Feature extraction (MNE + pyRiemann): Filter theta/alpha/beta/gamma; covariance; tangent space
-- Model training (sklearn): SVM baseline
-- Domain adaptation (PyTorch Lightning): Minimal DANN with GRL
+This repository contains preprocessing, feature extraction, and DANN training pipelines for EEG pain datasets.
 
-Quickstart
-1) Copy data into data/ds005284 (BIDS-like folders `sub-XXX/eeg/*.bdf`)
-2) Run pipeline (preprocess.py auto-detects data path via config):
-   - python src/preprocess.py
-   - python src/extract_features.py --npz packed/ds005284_pain.npz --out packed/features.npz
-   - python src/train_svm.py --features packed/features.npz
-3) Train DANN (optional)
-   - python src/train_dann.py --features packed/features.npz --epochs 30
+## 📁 Dataset Structure
 
-Configuration
-Edit config variables at the top of `src/preprocess.py`:
-- `DATA_ROOT`: Path to ds005284 (or set EEG_DATA_ROOT env var)
-- `BALANCE_PER_SUBJECT`: Balance classes per-subject (False = global balance)
-- Epoch timing, filter bands, sampling rate, etc.
+Each dataset is organized in its own folder under `datasets/`:
 
-Requirements
-pip install mne pyriemann scikit-learn numpy scipy torch torchvision pytorch-lightning
+```
+datasets/
+├── cpcgx/              # cpCGX_BIDS (Chronic Pain Resting-State)
+│   ├── data/           # Raw BrainVision files
+│   ├── scripts/        # Preprocessing, feature extraction, DANN
+│   ├── packed/         # Preprocessed epochs and features
+│   └── reports/        # Training results and metrics
+│
+└── ds005284/           # ds005284 (Pain vs Baseline)
+    ├── data/           # Raw BIDS data
+    ├── scripts/        # Preprocessing, feature extraction, DANN
+    ├── packed/         # Preprocessed epochs and features
+    └── reports/        # Training results and metrics
+```
 
+## 🚀 Quick Start
 
+### cpCGX_BIDS Dataset
+
+```bash
+cd datasets/cpcgx
+./run_pipeline.sh
+```
+
+Or run step-by-step:
+```bash
+cd datasets/cpcgx
+
+# Preprocess
+python scripts/preprocess_cpcgx.py --root data --out packed/cpcgx_pain.npz
+
+# Extract features
+python scripts/extract_features.py --npz packed/cpcgx_pain.npz --out packed/features_cpcgx.npz
+
+# Train DANN
+python scripts/train_dann_cpcgx.py --features packed/features_cpcgx.npz --report-dir reports
+```
+
+### ds005284 Dataset
+
+```bash
+cd datasets/ds005284
+./run_pipeline.sh
+```
+
+## 📊 Current Results
+
+### cpCGX_BIDS
+- **Subjects:** 74
+- **Epochs:** 19,918 (balanced EO/EC)
+- **DANN Accuracy:** 87.44% (best validation)
+
+### ds005284
+- See `datasets/ds005284/reports/` for results
+
+## 🔧 Requirements
+
+See `requirements.txt` for Python dependencies.
+
+## 📝 Notes
+
+- Each dataset folder is self-contained with its own scripts and results
+- Scripts use relative paths (run from dataset folder)
+- All preprocessing uses 10-20 system channel selection
+- Feature extraction uses Riemannian geometry (frequency-band covariance)

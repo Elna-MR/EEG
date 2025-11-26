@@ -1,0 +1,11 @@
+{
+  "sfreq": 256.0,
+  "epoch_len": 4.0,
+  "epoch_overlap": 2.0,
+  "num_channels": 29,
+  "num_subjects": 1,
+  "label_mapping": {
+    "0": "Eyes Open (EO)",
+    "1": "Eyes Closed (EC)"
+  }
+}
