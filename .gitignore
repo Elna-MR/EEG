@@ -93,6 +93,11 @@ eeg_pain_simple/data/ds005284/**/*.bdf
 eeg_pain_simple/data/ds005284/derivatives/**/*.fdt
 eeg_pain_simple/data/ds005284/derivatives/**/*.set
 
+# Additional data directories with large files
+data-additional/
+pain-eeg-figures/data/
+pain-eeg-figures/**/*.gdf
+
 
 # Large data files - already added above but being explicit
 ds005284_full/**/*.bdf
