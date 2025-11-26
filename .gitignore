@@ -18,6 +18,9 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
+*~
 
 # Database files
 *.db
@@ -31,9 +34,19 @@ Thumbs.db
 *.joblib
 *.pkl
 *.pickle
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.pb
+*.onnx
+*.safetensors
+*.weights
 
 # Jupyter notebook checkpoints
 .ipynb_checkpoints/
+# Jupyter notebooks with large outputs (optional - uncomment if needed)
+# *.ipynb
 
 # Distribution / packaging
 .Python
@@ -62,6 +75,12 @@ wheels/
 *.vhdr
 *.vmrk
 *.gdf
+*.mat
+*.h5
+*.hdf5
+*.npy
+*.nii
+*.nii.gz
 
 # Preprocessed data and features
 eeg_pain_simple/packed/
