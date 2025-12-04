@@ -1,0 +1,3 @@
+input_dim: 840
+lr: 0.001
+num_domains: 22
