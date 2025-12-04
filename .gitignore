@@ -85,10 +85,9 @@ wheels/
 # Preprocessed data and features
 eeg_pain_simple/packed/
 eeg_pain_simple/datasets/*/packed/
-eeg_pain_simple/datasets/*/data/**/*.bdf
-eeg_pain_simple/datasets/*/data/**/*.eeg
-eeg_pain_simple/datasets/*/data/**/*.vhdr
-eeg_pain_simple/datasets/*/data/**/*.vmrk
+eeg_pain_simple/datasets/*/data/
+eeg_pain_simple/datasets/*/reports/
+eeg_pain_simple/datasets/downloads/
 eeg_pain_simple/data/ds005284/**/*.bdf
 eeg_pain_simple/data/ds005284/derivatives/**/*.fdt
 eeg_pain_simple/data/ds005284/derivatives/**/*.set

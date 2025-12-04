@@ -51,8 +51,7 @@ RANDOM_STATE = 42
 
 # 10-20 system channel selection
 USE_10_20_SYSTEM = True           # Set True to select only 10-20 system channels
-# Process both 19 and 20 channels - results saved to separate files
-PROCESS_BOTH_19_20 = True          # Set True to process both 19 and 20 channel configurations
+NUM_CHANNELS = 20                  # Number of 10-20 system channels (20 channels: FP1, FP2, F3, F4, F7, F8, FZ, C3, C4, CZ, P3, P4, PZ, T7, T8, P7, P8, O1, O2, OZ)
 
 OUT_DIR = Path("packed")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -122,32 +121,20 @@ def rename_channels_from_biosemi(raw, sub_id):
     
     return raw
 
-def select_10_20_channels(raw, num_channels=19):
+def select_10_20_channels(raw):
     """
-    Select only 10-20 system EEG channels.
-    
-    Args:
-        raw: MNE Raw object (channels should already be renamed to standard names)
-        num_channels: 19 or 20 (20 adds Oz)
-    
-    Returns:
-        Raw object with only selected channels
+    Select 20 channels from 10-20 system EEG channels.
+    Standard 10-20 system: FP1, FP2, F3, F4, F7, F8, FZ, C3, C4, CZ, P3, P4, PZ, T7, T8, P7, P8, O1, O2, OZ
     """
-    # Standard 10-20 system channels (19 channels)
-    # Note: Using uppercase to match channel names from channels.tsv
-    channels_19 = [
+    # 20 channels from 10-20 system
+    target_channels = [
         'FP1', 'FP2', 'F3', 'F4', 'F7', 'F8', 'FZ',
         'C3', 'C4', 'CZ',
         'P3', 'P4', 'PZ',
-        'T7', 'T8',  # T7/T8 are preferred over T3/T4 in modern nomenclature
-        'P7', 'P8',  # P7/P8 are temporal-parietal (sometimes called T5/T6)
-        'O1', 'O2'
+        'T7', 'T8',
+        'P7', 'P8',
+        'O1', 'O2', 'OZ'
     ]
-    
-    # 20 channels: add OZ (note: channels.tsv uses 'OZ' uppercase)
-    channels_20 = channels_19 + ['OZ']
-    
-    target_channels = channels_20 if num_channels == 20 else channels_19
     
     # Get available channel names (case-insensitive matching)
     available_chs = [ch.upper() for ch in raw.ch_names]
@@ -169,8 +156,8 @@ def select_10_20_channels(raw, num_channels=19):
         print(f"[WARN] Missing 10-20 channels: {missing_chs}")
         print(f"[INFO] Available channels: {raw.ch_names[:10]}... (showing first 10)")
     
-    if len(selected_chs) < num_channels:
-        print(f"[WARN] Only found {len(selected_chs)}/{num_channels} 10-20 channels")
+    if len(selected_chs) < NUM_CHANNELS:
+        print(f"[WARN] Only found {len(selected_chs)}/{NUM_CHANNELS} 10-20 channels")
     
     # Pick channels and reorder to match target order
     try:
@@ -186,6 +173,8 @@ def select_10_20_channels(raw, num_channels=19):
         if ch_order:
             raw_selected = raw_selected.reorder_channels(ch_order)
         print(f"[INFO] Selected {len(selected_chs)} 10-20 system channels: {raw_selected.ch_names}")
+        if len(selected_chs) != NUM_CHANNELS:
+            print(f"[WARN] Expected {NUM_CHANNELS} channels but got {len(selected_chs)}")
         return raw_selected
     except ValueError as e:
         print(f"[ERROR] Failed to select channels: {e}")
@@ -195,13 +184,9 @@ def select_10_20_channels(raw, num_channels=19):
 # -----------------
 # Main Processing Function
 # -----------------
-def process_subjects(num_channels=19, output_suffix=""):
+def process_subjects():
     """
-    Process all subjects with specified number of 10-20 system channels.
-    
-    Args:
-        num_channels: 19 or 20 channels
-        output_suffix: Suffix to add to output filename (e.g., "_19ch" or "_20ch")
+    Process all subjects with 20 channels from 10-20 system.
     """
     all_X = []
     all_y = []
@@ -212,7 +197,7 @@ def process_subjects(num_channels=19, output_suffix=""):
         raise FileNotFoundError(f"No .bdf files found under {DATA_ROOT} with pattern {SUB_GLOB}")
 
     print(f"\n{'='*70}")
-    print(f"[INFO] Processing with {num_channels} 10-20 system channels")
+    print(f"[INFO] Processing with {NUM_CHANNELS} channels from 10-20 system")
     print(f"{'='*70}")
     print(f"[INFO] Found {len(bdf_files)} subjects")
 
@@ -256,10 +241,10 @@ def process_subjects(num_channels=19, output_suffix=""):
         # Rename channels from Biosemi format (A1-A32, B1-B32) to standard 10-20 names
         raw = rename_channels_from_biosemi(raw, sub_id)
 
-        # Select 10-20 system channels if enabled
-        if USE_10_20_SYSTEM and num_channels > 0:
-            print(f"[INFO] {sub_id}: Selecting {num_channels} 10-20 system channels")
-            raw = select_10_20_channels(raw, num_channels=num_channels)
+        # Select 20 channels from 10-20 system
+        if USE_10_20_SYSTEM:
+            print(f"[INFO] {sub_id}: Selecting {NUM_CHANNELS} 10-20 system channels")
+            raw = select_10_20_channels(raw)
             print(f"[INFO] {sub_id}: Channels after selection: {len(raw.ch_names)}")
 
         # Filter
@@ -341,22 +326,16 @@ def process_subjects(num_channels=19, output_suffix=""):
     print(f"[CHECK] X shape: {X_all.shape}  (trials, channels, samples)")
     print(f"[CHECK] sfreq: {SFREQ_TARGET}")
 
-    # Save to file with suffix
-    if output_suffix:
-        out_npz = OUT_DIR / f"ds005284_pain{output_suffix}.npz"
-        out_sfreq_json = OUT_DIR / f"sfreq{output_suffix}.json"
-    else:
-        out_npz = OUT_NPZ
-        out_sfreq_json = OUT_SFREQ_JSON
+    # Save to file
+    out_npz = OUT_DIR / "ds005284_pain.npz"
+    out_sfreq_json = OUT_DIR / "sfreq.json"
     
     np.savez_compressed(out_npz, X=X_all, y=y_all, subject=subs_all, sfreq=SFREQ_TARGET)
     with open(out_sfreq_json, "w") as f:
-        json.dump({"sfreq": float(SFREQ_TARGET), "num_channels": num_channels}, f)
+        json.dump({"sfreq": float(SFREQ_TARGET), "num_channels": NUM_CHANNELS}, f)
 
     print(f"[INFO] Saved epochs to {out_npz}")
     print(f"[INFO] Saved sampling freq to {out_sfreq_json}")
-    
-    return out_npz, out_sfreq_json
 
 # -----------------
 # Main Entry Point
@@ -364,29 +343,19 @@ def process_subjects(num_channels=19, output_suffix=""):
 def main():
     import sys
     print("Starting preprocessing...", file=sys.stderr, flush=True)
-    print(f"PROCESS_BOTH_19_20={PROCESS_BOTH_19_20}, USE_10_20_SYSTEM={USE_10_20_SYSTEM}", file=sys.stderr, flush=True)
-    if PROCESS_BOTH_19_20 and USE_10_20_SYSTEM:
-        # Process both 19 and 20 channel configurations
+    print(f"USE_10_20_SYSTEM={USE_10_20_SYSTEM}, NUM_CHANNELS={NUM_CHANNELS}", file=sys.stderr, flush=True)
+    
+    if USE_10_20_SYSTEM:
         print("\n" + "="*70)
-        print("PROCESSING BOTH 19 AND 20 CHANNEL CONFIGURATIONS")
+        print(f"PROCESSING WITH {NUM_CHANNELS} CHANNELS FROM 10-20 SYSTEM")
         print("="*70)
-        
-        # Process 19 channels
-        out_npz_19, out_sfreq_19 = process_subjects(num_channels=19, output_suffix="_19ch")
-        
-        # Process 20 channels
-        out_npz_20, out_sfreq_20 = process_subjects(num_channels=20, output_suffix="_20ch")
-        
+        process_subjects()
         print("\n" + "="*70)
         print("PROCESSING COMPLETE")
         print("="*70)
-        print(f"19-channel results: {out_npz_19}")
-        print(f"20-channel results: {out_npz_20}")
-        print("="*70)
     else:
-        # Process with single configuration (backward compatibility)
-        num_channels = 19 if USE_10_20_SYSTEM else 0  # 0 means use all channels
-        process_subjects(num_channels=num_channels, output_suffix="")
+        print("[ERROR] USE_10_20_SYSTEM must be True")
+        sys.exit(1)
 
 
 
