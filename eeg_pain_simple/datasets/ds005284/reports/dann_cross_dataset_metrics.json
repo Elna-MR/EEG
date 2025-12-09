@@ -1,0 +1,13 @@
+{
+  "train_accuracy": 1.0,
+  "test_accuracy": 0.96875,
+  "overfitting_gap": 0.03125,
+  "n_features": 500,
+  "n_subject_domains": 21,
+  "n_dataset_domains": 2,
+  "train_samples": 672,
+  "test_samples": 160,
+  "domain_weight": 0.1,
+  "mmd_weight": 0.05,
+  "used_osf_for_training": false
+}

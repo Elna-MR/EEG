@@ -1,0 +1,9 @@
+domain_weight: 0.1
+dropout: 0.5
+hidden_size: 256
+input_dim: 500
+lr: 0.0003
+mmd_weight: 0.05
+num_dataset_domains: 2
+num_subject_domains: 21
+weight_decay: 0.001

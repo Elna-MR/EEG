@@ -171,6 +171,11 @@ class ImprovedDANN(pl.LightningModule):
         }, prog_bar=True)
         return loss
 
+    def forward(self, x):
+        z = self.feature(x)
+        logits = self.classifier(z).squeeze(1)
+        return logits
+
     def validation_step(self, batch, batch_idx):
         x, y, d_subject, d_dataset, dataset_id = batch
         logits = self.classifier(self.feature(x)).squeeze(1)
@@ -416,15 +421,17 @@ def main():
     # Evaluate
     print("\n[11] Evaluating model...")
     model.eval()
+    device = next(model.parameters()).device
     with torch.no_grad():
         all_preds = []
         all_labels = []
         for batch in dl_test:
             x, y, _, _, _ = batch
+            x = x.to(device)
             logits = model(x)
             preds = (torch.sigmoid(logits) > 0.5).long()
-            all_preds.extend(preds.cpu().numpy())
-            all_labels.extend(y.cpu().numpy())
+            all_preds.extend(preds.cpu().detach().tolist())
+            all_labels.extend(y.tolist())
     
     all_preds = np.array(all_preds)
     all_labels = np.array(all_labels)
@@ -438,10 +445,11 @@ def main():
         train_labels = []
         for batch in dl_train:
             x, y, _, _, _ = batch
+            x = x.to(device)
             logits = model(x)
             preds = (torch.sigmoid(logits) > 0.5).long()
-            train_preds.extend(preds.cpu().numpy())
-            train_labels.extend(y.cpu().numpy())
+            train_preds.extend(preds.cpu().detach().tolist())
+            train_labels.extend(y.tolist())
     
     train_preds = np.array(train_preds)
     train_labels = np.array(train_labels)

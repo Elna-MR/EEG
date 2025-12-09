@@ -1,7 +1,0 @@
-domain_weight: 0.005
-dropout: 0.6
-hidden_size: 128
-input_dim: 300
-lr: 0.0003
-num_domains: 20
-weight_decay: 0.005

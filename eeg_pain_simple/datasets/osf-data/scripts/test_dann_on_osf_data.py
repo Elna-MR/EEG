@@ -32,14 +32,13 @@ class GradientReversal(torch.autograd.Function):
         return -ctx.lambda_ * grad_output, None
 
 
-class EnhancedDANN(pl.LightningModule):
-    def __init__(self, input_dim: int, num_domains: int, lr: float = 3e-4, 
-                 dropout: float = 0.6, weight_decay: float = 5e-3, 
-                 domain_weight: float = 0.005, hidden_size: int = 128):
+class ImprovedDANN(pl.LightningModule):
+    def __init__(self, input_dim: int, num_subject_domains: int, num_dataset_domains: int = 2,
+                 lr: float = 3e-4, dropout: float = 0.5, weight_decay: float = 1e-3, 
+                 domain_weight: float = 0.1, mmd_weight: float = 0.05, hidden_size: int = 256):
         super().__init__()
         self.save_hyperparameters()
         
-        # Match the actual training architecture
         self.feature = nn.Sequential(
             nn.Linear(input_dim, hidden_size), 
             nn.ReLU(), 
@@ -49,7 +48,7 @@ class EnhancedDANN(pl.LightningModule):
             nn.ReLU(), 
             nn.BatchNorm1d(hidden_size),
             nn.Dropout(dropout),
-            nn.Linear(hidden_size, hidden_size // 2),  # Additional layer
+            nn.Linear(hidden_size, hidden_size // 2),
             nn.ReLU(),
             nn.BatchNorm1d(hidden_size // 2),
             nn.Dropout(dropout * 0.5),
@@ -60,17 +59,26 @@ class EnhancedDANN(pl.LightningModule):
             nn.Linear(hidden_size // 2, 1)
         )
         
-        self.domain_disc = nn.Sequential(
+        self.domain_disc_subject = nn.Sequential(
             nn.Dropout(dropout),
             nn.Linear(hidden_size // 2, 256), 
             nn.ReLU(), 
             nn.Dropout(dropout),
-            nn.Linear(256, num_domains)
+            nn.Linear(256, num_subject_domains)
+        )
+        
+        self.domain_disc_dataset = nn.Sequential(
+            nn.Dropout(dropout),
+            nn.Linear(hidden_size // 2, 128), 
+            nn.ReLU(), 
+            nn.Dropout(dropout),
+            nn.Linear(128, num_dataset_domains)
         )
         
         self.bce = nn.BCEWithLogitsLoss()
         self.ce = nn.CrossEntropyLoss()
         self.domain_weight = domain_weight
+        self.mmd_weight = mmd_weight
 
     def forward(self, x):
         z = self.feature(x)
@@ -81,16 +89,22 @@ class EnhancedDANN(pl.LightningModule):
 def main():
     ap = argparse.ArgumentParser(description="Test DANN model on osf-data")
     ap.add_argument("--model-checkpoint", 
-                   default="../../ds005284/reports/checkpoints_dann_enhanced/best-epoch=48-val_loss=0.073.ckpt",
+                   default="../../ds005284/reports/checkpoints_dann_cross_dataset/best-epoch=47-val_loss=0.034.ckpt",
                    help="Path to trained DANN model checkpoint")
     ap.add_argument("--features", default="../packed/features_osf-data_riemannian_improved.npz",
                    help="osf-data improved Riemannian features")
-    ap.add_argument("--pca-model", default="../../ds005284/reports/pca_model.pkl",
+    ap.add_argument("--pca-model", default="../../ds005284/reports/ensemble_models/pca_model.pkl",
                    help="Saved PCA model from training (optional)")
-    ap.add_argument("--scaler-model", default="../../ds005284/reports/scaler_model.pkl",
+    ap.add_argument("--scaler-model", default="../../ds005284/reports/ensemble_models/scaler_model.pkl",
                    help="Saved Scaler model from training (optional)")
-    ap.add_argument("--pca-components", type=int, default=300,
+    ap.add_argument("--pca-components", type=int, default=500,
                    help="Number of PCA components (if PCA model not saved)")
+    ap.add_argument("--hidden-size", type=int, default=256,
+                   help="Hidden size (for ImprovedDANN)")
+    ap.add_argument("--num-subject-domains", type=int, default=21,
+                   help="Number of subject domains")
+    ap.add_argument("--num-dataset-domains", type=int, default=2,
+                   help="Number of dataset domains")
     ap.add_argument("--batch", type=int, default=32,
                    help="Batch size")
     ap.add_argument("--output", default="../reports/dann_test_on_osf_data.json",
@@ -118,20 +132,52 @@ def main():
     # In a real scenario, you'd save the PCA/scaler from training
     print("\n[2] Applying PCA and normalization...")
     
-    # Apply PCA (same number of components as training)
-    max_components = min(X_osf.shape[0], X_osf.shape[1], args.pca_components)
-    n_components = max_components
+    # Try to load PCA and Scaler from training
+    pca_path = Path(args.pca_model)
+    scaler_path = Path(args.scaler_model)
     
-    print(f"   Applying PCA: {X_osf.shape[1]} → {n_components} features...")
-    pca = PCA(n_components=n_components, random_state=42)
-    X_osf_pca = pca.fit_transform(X_osf)
-    explained_var = pca.explained_variance_ratio_.sum()
-    print(f"   PCA applied: {X_osf_pca.shape}")
-    print(f"   Explained variance: {explained_var:.4f} ({explained_var*100:.2f}%)")
-    
-    # Normalize
-    scaler = StandardScaler()
-    X_osf_scaled = scaler.fit_transform(X_osf_pca)
+    if pca_path.exists() and scaler_path.exists():
+        print(f"   Loading PCA and Scaler from training...")
+        import pickle
+        with open(pca_path, 'rb') as f:
+            pca = pickle.load(f)
+        with open(scaler_path, 'rb') as f:
+            scaler = pickle.load(f)
+        
+        # Handle feature dimension mismatch
+        expected_features = pca.n_features_in_
+        actual_features = X_osf.shape[1]
+        if actual_features != expected_features:
+            print(f"   [WARN] Feature dimension mismatch: expected {expected_features}, got {actual_features}")
+            if actual_features > expected_features:
+                X_osf = X_osf[:, :expected_features]
+                print(f"   Truncated to {expected_features} features")
+            else:
+                padding = np.zeros((X_osf.shape[0], expected_features - actual_features))
+                X_osf = np.hstack([X_osf, padding])
+                print(f"   Padded to {expected_features} features")
+        
+        X_osf_pca = pca.transform(X_osf)
+        X_osf_scaled = scaler.transform(X_osf_pca)
+        explained_var = pca.explained_variance_ratio_.sum()
+        n_components = pca.n_components_
+        print(f"   PCA applied: {X_osf_pca.shape}")
+        print(f"   Explained variance: {explained_var:.4f} ({explained_var*100:.2f}%)")
+    else:
+        # Apply PCA (same number of components as training)
+        max_components = min(X_osf.shape[0], X_osf.shape[1], args.pca_components)
+        n_components = max_components
+        
+        print(f"   Applying PCA: {X_osf.shape[1]} → {n_components} features...")
+        pca = PCA(n_components=n_components, random_state=42)
+        X_osf_pca = pca.fit_transform(X_osf)
+        explained_var = pca.explained_variance_ratio_.sum()
+        print(f"   PCA applied: {X_osf_pca.shape}")
+        print(f"   Explained variance: {explained_var:.4f} ({explained_var*100:.2f}%)")
+        
+        # Normalize
+        scaler = StandardScaler()
+        X_osf_scaled = scaler.fit_transform(X_osf_pca)
     print(f"   Normalized features: {X_osf_scaled.shape}")
 
     # Find model checkpoint
@@ -150,46 +196,11 @@ def main():
     
     print(f"   Loading checkpoint: {checkpoint_path}")
     
-    # Load model
-    # Note: We need to know the input_dim and num_domains from training
-    # For now, we'll infer from checkpoint or use defaults
+    # Load model using PyTorch Lightning's load_from_checkpoint
     try:
-        checkpoint = torch.load(checkpoint_path, map_location='cpu')
-        hyperparams = checkpoint.get('hyper_parameters', {})
-        input_dim = hyperparams.get('input_dim', X_osf_scaled.shape[1])
-        num_domains = hyperparams.get('num_domains', 20)  # From ds005284 training
-        
-        print(f"   Model input_dim: {input_dim}")
-        print(f"   Model num_domains: {num_domains}")
-        
-        # Adjust input_dim if needed (should match PCA output)
-        if input_dim != X_osf_scaled.shape[1]:
-            print(f"   [WARN] Model expects {input_dim} features, but osf-data has {X_osf_scaled.shape[1]}")
-            print(f"   [WARN] Will use {X_osf_scaled.shape[1]} features (matching PCA output)")
-            input_dim = X_osf_scaled.shape[1]
-        
-        model = EnhancedDANN(
-            input_dim=input_dim,
-            num_domains=num_domains,
-            lr=hyperparams.get('lr', 3e-4),
-            dropout=hyperparams.get('dropout', 0.6),
-            weight_decay=hyperparams.get('weight_decay', 5e-3),
-            domain_weight=hyperparams.get('domain_weight', 0.005),
-            hidden_size=hyperparams.get('hidden_size', 128)
-        )
-        
-        # Load weights (excluding domain discriminator if num_domains differs)
-        model_state = checkpoint['state_dict']
-        # Filter out domain discriminator if num_domains differs
-        filtered_state = {}
-        for k, v in model_state.items():
-            if 'domain_disc' in k and num_domains != hyperparams.get('num_domains', 20):
-                continue  # Skip domain discriminator if domain count differs
-            filtered_state[k] = v
-        
-        model.load_state_dict(filtered_state, strict=False)
+        model = ImprovedDANN.load_from_checkpoint(str(checkpoint_path))
         model.eval()
-        
+        print(f"   Model loaded successfully")
     except Exception as e:
         print(f"   [ERROR] Failed to load model: {e}")
         raise
