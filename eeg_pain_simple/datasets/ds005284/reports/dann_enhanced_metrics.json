@@ -1,0 +1,16 @@
+{
+  "train_accuracy": 1.0,
+  "test_accuracy": 0.9739583134651184,
+  "overfitting_gap": 0.026041686534881592,
+  "best_val_accuracy": 0.9739583134651184,
+  "final_val_accuracy": 0.9739583134651184,
+  "final_val_loss": 0.0751231685280799,
+  "final_train_loss": 0.0223416853696107,
+  "n_features": 300,
+  "n_domains": 20,
+  "train_samples": 640,
+  "test_samples": 192,
+  "train_subjects": 20,
+  "test_subjects": 6,
+  "split_method": "subject_level"
+}

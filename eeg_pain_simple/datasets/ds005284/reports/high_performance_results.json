@@ -1,0 +1,32 @@
+{
+  "baseline_accuracy": 0.6354,
+  "best_individual_model": "gbm",
+  "best_individual_accuracy": 0.9583333333333334,
+  "ensemble_weighted_accuracy": 0.90625,
+  "ensemble_voting_accuracy": 0.7799479166666666,
+  "improvement": 0.27085000000000004,
+  "improvement_percent": 42.62669184765503,
+  "target_achieved": true,
+  "individual_scores": {
+    "rf1": {
+      "train": 1.0,
+      "val": 0.8268229166666666
+    },
+    "rf2": {
+      "train": 1.0,
+      "val": 0.7213541666666666
+    },
+    "gbm": {
+      "train": 1.0,
+      "val": 0.9583333333333334
+    },
+    "lr": {
+      "train": 1.0,
+      "val": 0.77734375
+    },
+    "svm": {
+      "train": 1.0,
+      "val": 0.6640625
+    }
+  }
+}

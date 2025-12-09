@@ -1,0 +1,43 @@
+{
+  "model_source": "ds005284",
+  "test_dataset": "osf-data",
+  "overall_accuracy_weighted": 0.8725961538461539,
+  "overall_accuracy_voting": 0.8774038461538461,
+  "baseline_accuracy": 0.9182692307692307,
+  "pain_accuracy": 0.8269230769230769,
+  "test_samples": 832,
+  "test_subjects": 22,
+  "n_features": 500,
+  "pca_components": 500,
+  "individual_scores": {
+    "rf1": 0.7644230769230769,
+    "rf2": 0.6995192307692307,
+    "gbm": 0.8449519230769231,
+    "lr": 0.8725961538461539,
+    "svm": 0.5528846153846154
+  },
+  "per_subject_accuracy": {
+    "Study One_P_01": 0.6428571428571429,
+    "Study One_P_02": 0.7878787878787878,
+    "Study One_P_03": 0.7714285714285715,
+    "Study One_P_04": 0.9811320754716981,
+    "Study One_P_05": 0.9354838709677419,
+    "Study One_P_06": 0.8823529411764706,
+    "Study One_P_07": 0.855072463768116,
+    "Study One_P_08": 0.9024390243902439,
+    "Study One_P_09": 0.8484848484848485,
+    "Study One_P_10": 0.7878787878787878,
+    "Study One_P_11": 0.8048780487804879,
+    "Study One_P_12": 0.875,
+    "Study One_P_13": 0.9090909090909091,
+    "Study One_P_17": 0.875,
+    "Study One_P_18": 0.9591836734693877,
+    "Study One_P_20": 0.9047619047619048,
+    "Study One_P_21": 0.8703703703703703,
+    "Study One_P_22": 0.7954545454545454,
+    "Study One_P_23": 0.8888888888888888,
+    "Study One_P_24": 0.9523809523809523,
+    "Study One_P_25": 0.8372093023255814,
+    "Study Two_P_01": 0.9591836734693877
+  }
+}

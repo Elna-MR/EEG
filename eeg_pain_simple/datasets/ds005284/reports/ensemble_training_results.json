@@ -1,0 +1,43 @@
+{
+  "train_samples": 672,
+  "test_samples": 160,
+  "train_subjects": 21,
+  "test_subjects": 5,
+  "n_features_original": 9455,
+  "n_features_pca": 500,
+  "pca_explained_variance": 0.9870645440159771,
+  "baseline_accuracy": 0.5,
+  "best_individual_model": "lr",
+  "best_individual_accuracy": 1.0,
+  "ensemble_weighted_accuracy": 0.89375,
+  "ensemble_voting_accuracy": 0.9,
+  "ensemble_weights": {
+    "rf1": 0.21323529411764705,
+    "rf2": 0.20588235294117646,
+    "gbm": 0.18823529411764706,
+    "lr": 0.23529411764705882,
+    "svm": 0.15735294117647058
+  },
+  "individual_scores": {
+    "rf1": {
+      "train": 1.0,
+      "test": 0.90625
+    },
+    "rf2": {
+      "train": 1.0,
+      "test": 0.875
+    },
+    "gbm": {
+      "train": 1.0,
+      "test": 0.8
+    },
+    "lr": {
+      "train": 1.0,
+      "test": 1.0
+    },
+    "svm": {
+      "train": 1.0,
+      "test": 0.66875
+    }
+  }
+}
